@@ -3,13 +3,14 @@ using System.Linq;
 using PlaylistCore.Overrides;
 using System.Collections.Generic;
 using BeatSaberPlaylistsLib;
+using HMUI;
 
 namespace PlaylistCore.HarmonyPatches
 {
     [HarmonyPatch(typeof(AnnotatedBeatmapLevelCollectionsTableView), "HandleDidSelectColumnEvent")]
     internal class AnnotatedBeatmapLevelCollectionsTableView_HandleDidSelectColumnEvent
     {
-        internal static bool Prefix(ref AnnotatedBeatmapLevelCollectionsTableView __instance, ref IAnnotatedBeatmapLevelCollection[] ____annotatedBeatmapLevelCollections, ref int column)
+        internal static bool Prefix(ref AnnotatedBeatmapLevelCollectionsTableView __instance, ref IAnnotatedBeatmapLevelCollection[] ____annotatedBeatmapLevelCollections, ref int column, ref TableView ____tableView)
         {
             var playlist = ____annotatedBeatmapLevelCollections[column];
             if (playlist is CustomPlaylistBackButton)
@@ -31,21 +32,25 @@ namespace PlaylistCore.HarmonyPatches
                         levelCollections.Add(customGroup);
                     }
                     levelCollections.AddRange(playlists);
-                    __instance.SetData(levelCollections.ToArray());
+                    ____annotatedBeatmapLevelCollections = levelCollections.ToArray();
                 }
                 else
                 {
                     var group = new CustomPlaylistGroup(backButton.parent);
-                    __instance.SetData(SetupNonRootGroup(group));
+                    ____annotatedBeatmapLevelCollections = SetupNonRootGroup(group);
                 }
-
+                __instance.HandleAdditionalContentModelDidInvalidateData();
+                ____tableView.ScrollToCellWithIdx(0, TableViewScroller.ScrollPositionType.Beginning, false);
+                ____tableView.ClearSelection();
                 return false;
             }
             if (playlist is CustomPlaylistGroup)
             {
                 var group = playlist as CustomPlaylistGroup;
-                __instance.SetData(SetupNonRootGroup(group));
-
+                ____annotatedBeatmapLevelCollections =  SetupNonRootGroup(group);
+                __instance.HandleAdditionalContentModelDidInvalidateData();
+                ____tableView.ScrollToCellWithIdx(0, TableViewScroller.ScrollPositionType.Beginning, false);
+                ____tableView.ClearSelection();
                 return false;
             }
 
