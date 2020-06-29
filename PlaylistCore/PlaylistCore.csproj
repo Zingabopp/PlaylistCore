@@ -128,7 +128,6 @@
   <ItemGroup>
     <Compile Include="HarmonyPatches\LevelFilteringNavigationController_InitializeTabBarViewController.cs" />
     <Compile Include="HarmonyPatches\AnnotatedBeatmapLevelCollectionsTableView_HandleDidSelectColumnEvent.cs" />
-    <Compile Include="HarmonyPatches\PackSwitched.cs" />
     <Compile Include="Overrides\CustomPlaylist.cs" />
     <Compile Include="Overrides\CustomPlaylistBackButton.cs" />
     <Compile Include="Overrides\CustomPlaylistGroup.cs" />

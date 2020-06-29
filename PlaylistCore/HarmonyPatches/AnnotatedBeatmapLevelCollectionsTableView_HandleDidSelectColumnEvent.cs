@@ -1,9 +1,8 @@
-﻿using HarmonyLib;
-using System.Linq;
+﻿using HMUI;
+using HarmonyLib;
 using PlaylistCore.Overrides;
 using System.Collections.Generic;
 using BeatSaberPlaylistsLib;
-using HMUI;
 
 namespace PlaylistCore.HarmonyPatches
 {
@@ -24,20 +23,13 @@ namespace PlaylistCore.HarmonyPatches
 
                     List<IAnnotatedBeatmapLevelCollection> levelCollections = new List<IAnnotatedBeatmapLevelCollection>();
                     levelCollections.AddRange(PlaylistCore.playlistTabData);
-
-                    var groups = manager.GetChildManagers;
-                    for (int i = 0; i < groups.Count(); i++)
-                    {
-                        var customGroup = new CustomPlaylistGroup(groups.ElementAt(i));
-                        levelCollections.Add(customGroup);
-                    }
-                    levelCollections.AddRange(playlists);
+                    levelCollections.AddRange(PlaylistCore.SetupGroup(manager, false));
                     ____annotatedBeatmapLevelCollections = levelCollections.ToArray();
                 }
                 else
                 {
                     var group = new CustomPlaylistGroup(backButton.parent);
-                    ____annotatedBeatmapLevelCollections = SetupNonRootGroup(group);
+                    ____annotatedBeatmapLevelCollections = PlaylistCore.SetupGroup(group.PlaylistManager, true);
                 }
                 __instance.HandleAdditionalContentModelDidInvalidateData();
                 ____tableView.ScrollToCellWithIdx(0, TableViewScroller.ScrollPositionType.Beginning, false);
@@ -47,7 +39,7 @@ namespace PlaylistCore.HarmonyPatches
             if (playlist is CustomPlaylistGroup)
             {
                 var group = playlist as CustomPlaylistGroup;
-                ____annotatedBeatmapLevelCollections =  SetupNonRootGroup(group);
+                ____annotatedBeatmapLevelCollections = PlaylistCore.SetupGroup(group.PlaylistManager, true);
                 __instance.HandleAdditionalContentModelDidInvalidateData();
                 ____tableView.ScrollToCellWithIdx(0, TableViewScroller.ScrollPositionType.Beginning, false);
                 ____tableView.ClearSelection();
@@ -55,21 +47,6 @@ namespace PlaylistCore.HarmonyPatches
             }
 
             return true;
-        }
-
-        internal static IAnnotatedBeatmapLevelCollection[] SetupNonRootGroup(CustomPlaylistGroup group)
-        {
-            List<IAnnotatedBeatmapLevelCollection> levelCollections = new List<IAnnotatedBeatmapLevelCollection>();
-            var backButton = new CustomPlaylistBackButton(group.PlaylistManager.Parent);
-            levelCollections.Add(backButton);
-            var groups = group.PlaylistManager.GetChildManagers;
-            for (int i = 0; i < groups.Count(); i++)
-            {
-                var customGroup = new CustomPlaylistGroup(groups.ElementAt(i));
-                levelCollections.Add(customGroup);
-            }
-            levelCollections.AddRange(group.PlaylistManager.GetAllPlaylists());
-            return levelCollections.ToArray();
         }
     }
 }
