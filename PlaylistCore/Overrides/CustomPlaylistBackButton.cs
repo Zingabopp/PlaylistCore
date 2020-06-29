@@ -18,6 +18,6 @@ namespace PlaylistCore.Overrides
 
         public Sprite coverImage => Utilities.backButton;
 
-        public IBeatmapLevelCollection beatmapLevelCollection => new BeatmapLevelCollection(new DummyPreviewBeatmapLevel[0]);
+        public IBeatmapLevelCollection beatmapLevelCollection => new DummyBeatmapLevelCollection();
     }
 }
