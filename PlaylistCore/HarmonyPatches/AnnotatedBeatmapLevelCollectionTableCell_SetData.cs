@@ -39,6 +39,10 @@ namespace PlaylistCore.HarmonyPatches
             AnnotatedBeatmapLevelCollectionTableCell cell = __instance;
             if (annotatedBeatmapLevelCollection is IDeferredSpriteLoad deferredSpriteLoad)
             {
+                if (deferredSpriteLoad.SpriteWasLoaded)
+                {
+                    Plugin.Log.Info($"Sprite was already loaded for {(deferredSpriteLoad as IAnnotatedBeatmapLevelCollection).collectionName}");
+                }
                 if (EventTable.TryGetValue(deferredSpriteLoad, out AnnotatedBeatmapLevelCollectionTableCell existing))
                 {
                     EventTable.Remove(deferredSpriteLoad);
@@ -54,10 +58,6 @@ namespace PlaylistCore.HarmonyPatches
         {
             if (sender is IDeferredSpriteLoad deferredSpriteLoad)
             {
-                if (deferredSpriteLoad.SpriteWasLoaded)
-                {
-                    Plugin.Log.Info($"Sprite was already loaded for {(deferredSpriteLoad as IAnnotatedBeatmapLevelCollection).collectionName}");
-                }
                 if (EventTable.TryGetValue(deferredSpriteLoad, out AnnotatedBeatmapLevelCollectionTableCell tableCell))
                 {
                     IAnnotatedBeatmapLevelCollection collection = BeatmapCollectionAccessor(ref tableCell);
