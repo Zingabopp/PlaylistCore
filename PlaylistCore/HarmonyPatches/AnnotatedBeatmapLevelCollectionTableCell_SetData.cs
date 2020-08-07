@@ -20,7 +20,7 @@ namespace PlaylistCore.HarmonyPatches
     [HarmonyPatch(typeof(AnnotatedBeatmapLevelCollectionTableCell), nameof(AnnotatedBeatmapLevelCollectionTableCell.SetData),
         new Type[] { // List the Types of the method's parameters.
         typeof(IAnnotatedBeatmapLevelCollection)})]
-    public class HarmonyPatch1
+    public class AnnotatedBeatmapLevelCollectionTableCell_SetData
     {
         public static readonly ConditionalWeakTable<IDeferredSpriteLoad, AnnotatedBeatmapLevelCollectionTableCell> EventTable = new ConditionalWeakTable<IDeferredSpriteLoad, AnnotatedBeatmapLevelCollectionTableCell>();
         public static readonly FieldAccessor<AnnotatedBeatmapLevelCollectionTableCell, Image>.Accessor CoverImageAccessor
