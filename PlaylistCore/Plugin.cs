@@ -25,7 +25,7 @@ namespace PlaylistCore
 
             _harmony = new Harmony("dev.auros.playlistcore");
             BeatSaberPlaylistsLib.Types.Playlist.DefaultCoverImage = Utilities.groupIcon;
-            BeatSaberPlaylistsLib.Types.Playlist.LoadWait = new WaitForSeconds(10);
+            BeatSaberPlaylistsLib.Types.Playlist.LoadWait = new WaitForSeconds(2);
         }
 
         [OnEnable]

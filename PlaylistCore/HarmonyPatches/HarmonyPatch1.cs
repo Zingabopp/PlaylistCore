@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using BeatSaberPlaylistsLib.Types;
+using BS_Utils.Utilities;
 using HarmonyLib;
+using IPA.Utilities;
 using UnityEngine.UI;
 
 /// <summary>
@@ -19,6 +22,11 @@ namespace PlaylistCore.HarmonyPatches
         typeof(IAnnotatedBeatmapLevelCollection)})]
     public class HarmonyPatch1
     {
+        public static readonly ConditionalWeakTable<IDeferredSpriteLoad, AnnotatedBeatmapLevelCollectionTableCell> EventTable = new ConditionalWeakTable<IDeferredSpriteLoad, AnnotatedBeatmapLevelCollectionTableCell>();
+        public static readonly FieldAccessor<AnnotatedBeatmapLevelCollectionTableCell, Image>.Accessor CoverImageAccessor
+            = FieldAccessor<AnnotatedBeatmapLevelCollectionTableCell, Image>.GetAccessor("_coverImage");
+        public static readonly FieldAccessor<AnnotatedBeatmapLevelCollectionTableCell, IAnnotatedBeatmapLevelCollection>.Accessor BeatmapCollectionAccessor
+             = FieldAccessor<AnnotatedBeatmapLevelCollectionTableCell, IAnnotatedBeatmapLevelCollection>.GetAccessor("_annotatedBeatmapLevelCollection");
         /// <summary>
         /// This code is run before the original code in MethodToPatch is run.
         /// </summary>
@@ -28,28 +36,52 @@ namespace PlaylistCore.HarmonyPatches
         ///     added three _ to the beginning to reference it in the patch. Adding ref means we can change it.</param>
         static void Postfix(AnnotatedBeatmapLevelCollectionTableCell __instance, ref IAnnotatedBeatmapLevelCollection annotatedBeatmapLevelCollection, ref Image ____coverImage)
         {
-            var col = annotatedBeatmapLevelCollection;
             AnnotatedBeatmapLevelCollectionTableCell cell = __instance;
             if (annotatedBeatmapLevelCollection is IDeferredSpriteLoad deferredSpriteLoad)
             {
-                var image = ____coverImage;
-                EventHandler action = (s, e) =>
+                if (EventTable.TryGetValue(deferredSpriteLoad, out AnnotatedBeatmapLevelCollectionTableCell existing))
                 {
-                    if (deferredSpriteLoad == s)
+                    EventTable.Remove(deferredSpriteLoad);
+                }
+                EventTable.Add(deferredSpriteLoad, cell);
+                deferredSpriteLoad.SpriteLoaded -= OnSpriteLoaded;
+                deferredSpriteLoad.SpriteLoaded += OnSpriteLoaded;
+            }
+        }
+
+
+        public static void OnSpriteLoaded(object sender, EventArgs e)
+        {
+            if (sender is IDeferredSpriteLoad deferredSpriteLoad)
+            {
+                if (deferredSpriteLoad.SpriteWasLoaded)
+                {
+                    Plugin.Log.Info($"Sprite was already loaded for {(deferredSpriteLoad as IAnnotatedBeatmapLevelCollection).collectionName}");
+                }
+                if (EventTable.TryGetValue(deferredSpriteLoad, out AnnotatedBeatmapLevelCollectionTableCell tableCell))
+                {
+                    IAnnotatedBeatmapLevelCollection collection = BeatmapCollectionAccessor(ref tableCell);
+                    if (collection == deferredSpriteLoad)
                     {
-                        Plugin.Log.Info($"Updating image for {col.collectionName}");
-                        image.sprite = deferredSpriteLoad.Sprite;
+                        Plugin.Log.Info($"Updating image for {collection.collectionName}");
+                        CoverImageAccessor(ref tableCell).sprite = deferredSpriteLoad.Sprite;
                     }
                     else
                     {
-                        if (s is IAnnotatedBeatmapLevelCollection bmc)
-                            Plugin.Log.Warn($"Types don't match for deferred sprite load. {bmc.collectionName} != {col.collectionName}");
-                        else
-                            Plugin.Log.Warn($"Wrong sender type for deferred sprite load: {s?.GetType().Name ?? "<NULL>"}");
+                        Plugin.Log.Warn($"Collection '{collection.collectionName}' is not {(deferredSpriteLoad as IAnnotatedBeatmapLevelCollection).collectionName}");
+                        EventTable.Remove(deferredSpriteLoad);
+                        deferredSpriteLoad.SpriteLoaded -= OnSpriteLoaded;
                     }
-                };
-                deferredSpriteLoad.SpriteLoaded -= action;
-                deferredSpriteLoad.SpriteLoaded += action;
+                }
+                else
+                {
+                    Plugin.Log.Warn($"{(deferredSpriteLoad as IAnnotatedBeatmapLevelCollection).collectionName} is not in the EventTable.");
+                    deferredSpriteLoad.SpriteLoaded -= OnSpriteLoaded;
+                }
+            }
+            else
+            {
+                Plugin.Log.Warn($"Wrong sender type for deferred sprite load: {sender?.GetType().Name ?? "<NULL>"}");
             }
         }
     }
